@@ -1,0 +1,13 @@
+pandas>=2.2.0
+openpyxl>=3.1.0
+xlsxwriter>=3.2.0
+streamlit>=1.36.0
+python-pptx>=1.0.0
+# colorama is a Windows-only conditional dependency of click/streamlit. When the
+# portable Windows zip is built on macOS, pip skips it (the "Windows only" marker
+# is evaluated against the Mac host), causing "No module named 'colorama'" on the
+# target PC. Listing it directly ensures it is always bundled. (No-op on macOS.)
+colorama>=0.4.6
+# calamine: fast Excel reader (6x faster than openpyxl for large files like the
+# 50 MB Master Net Change Validation Report with 680K rows).
+python-calamine>=0.1.7

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Price Change Impact Estimator</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.css"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.js";
+      // Cache-buster: GitHub Pages serves every file with Cache-Control: max-age=600,
+      // and the browser caches each mounted file's URL independently of the outer
+      // page's own query string -- without this, edited .py files can keep loading
+      // stale (pre-fix) code for up to 10 minutes even in a brand-new tab.
+      const v = Date.now();
+      mount(
+        {
+          // Price-impact-only web version: dropped the Renewal Comparison tab
+          // entirely (it needed glasia.xlsx ~40MB + egrid.xlsx + python-pptx/
+          // lxml, which made the full app too slow/unreliable under Pyodide).
+          // price_impact.py only needs openpyxl/pandas/xlsxwriter, so this
+          // mounts in seconds with no large reference files at all.
+          requirements: ["openpyxl", "xlsxwriter", "numpy"],
+          entrypoint: "streamlit_app.py",
+          files: {
+            "streamlit_app.py": `
+import sys
+sys.path.insert(0, "/mnt/app")
+_entry = "/mnt/app/price_impact_app.py"
+with open(_entry, encoding="utf-8") as _f:
+    _src = _f.read()
+exec(compile(_src, _entry, "exec"), {"__name__": "__main__", "__file__": _entry})
+`,
+            "/mnt/app/price_impact_app.py": { url: "./price_impact_app.py?v=" + v },
+            "/mnt/app/price_impact.py": { url: "./price_impact.py?v=" + v },
+            "/mnt/app/master_net_change_validation_report.csv.gz": { url: "./master_net_change_validation_report.csv.gz?v=" + v },
+            "/mnt/app/master_net_change_validation_report.meta.json": { url: "./master_net_change_validation_report.meta.json?v=" + v },
+          },
+        },
+        document.getElementById("root")
+      );
+    </script>
+  </body>
+</html>
+

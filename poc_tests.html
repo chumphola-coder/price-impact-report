@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>CCWR stlite PoC</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.css"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.js";
+      mount(
+        {
+          requirements: ["openpyxl", "python-pptx", "xlsxwriter", "numpy"],
+          entrypoint: "streamlit_app.py",
+          files: {
+            "streamlit_app.py": `
+import time
+import streamlit as st
+
+st.title("CCWR stlite proof-of-concept")
+st.write("This is NOT the full app -- just testing whether the risky parts work at all in-browser.")
+
+st.header("1. Package import test")
+t0 = time.time()
+try:
+    import pandas as pd
+    import openpyxl
+    import pptx
+    st.success(f"pandas {pd.__version__}, openpyxl {openpyxl.__version__}, python-pptx OK -- imported in {time.time()-t0:.1f}s")
+except Exception as e:
+    st.error(f"Import failed: {e}")
+
+st.header("2. Load real glasia data, reduced to 3 needed columns (Product/Price/Service Program)")
+st.write("User-authorized: this data is not confidential (publicly available via login/subscription). "
+         "Real prices and SKUs, just stripped down from 14 columns to the 3 the app actually uses.")
+if st.button("Run reduced glasia load test"):
+    t0 = time.time()
+    try:
+        df = pd.read_excel(
+            "/mnt/glasia_reduced_3col.xlsx",
+            sheet_name=0, header=1, engine="openpyxl",
+        )
+        st.success(f"Loaded {len(df):,} rows in {time.time()-t0:.1f}s")
+        st.dataframe(df.head(10))
+    except Exception as e:
+        st.error(f"Load failed: {type(e).__name__}: {e}")
+
+st.header("3. Import test: the REAL app source modules")
+st.write("Testing whether compare_engine.py, excel_reader.py, service_tier_classifier.py, "
+         "tier_impact_engine.py, report_writer.py, ppt_writer.py import cleanly under Pyodide.")
+if st.button("Run real module import test"):
+    import sys
+    sys.path.insert(0, "/mnt/app")
+    results = []
+    for mod_name in ["excel_reader", "service_tier_classifier", "compare_engine", "tier_impact_engine", "report_writer", "ppt_writer"]:
+        t0 = time.time()
+        try:
+            __import__(mod_name)
+            results.append((mod_name, True, f"OK in {time.time()-t0:.2f}s", ""))
+        except Exception as e:
+            results.append((mod_name, False, "", f"{type(e).__name__}: {e}"))
+    for name, ok, msg, err in results:
+        if ok:
+            st.success(f"{name}: {msg}")
+        else:
+            st.error(f"{name}: FAILED -- {err}")
+
+st.header("4. Function CALL test: real service_tier_classifier.load_glasia() on real data")
+if st.button("Run load_glasia() call test"):
+    import sys
+    sys.path.insert(0, "/mnt/app")
+    t0 = time.time()
+    try:
+        from service_tier_classifier import load_glasia
+        result = load_glasia("/mnt/glasia_reduced_3col.xlsx", apply_price_change_log=False)
+        st.success(f"load_glasia() returned {len(result):,} SKUs in {time.time()-t0:.1f}s")
+        sample_sku = next(iter(result))
+        st.write(f"Sample entry: {sample_sku!r} -> {result[sample_sku]!r}")
+    except Exception as e:
+        st.error(f"Call failed: {type(e).__name__}: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+`,
+            "/mnt/glasia_reduced_3col.xlsx": {
+              url: "./glasia_reduced_3col.xlsx",
+            },
+            "/mnt/app/excel_reader.py": { url: "./excel_reader.py" },
+            "/mnt/app/service_tier_classifier.py": { url: "./service_tier_classifier.py" },
+            "/mnt/app/compare_engine.py": { url: "./compare_engine.py" },
+            "/mnt/app/tier_impact_engine.py": { url: "./tier_impact_engine.py" },
+            "/mnt/app/report_writer.py": { url: "./report_writer.py" },
+            "/mnt/app/ppt_writer.py": { url: "./ppt_writer.py" },
+          },
+        },
+        document.getElementById("root")
+      );
+    </script>
+  </body>
+</html>
+

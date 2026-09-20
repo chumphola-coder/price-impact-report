@@ -1,0 +1,35 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+
+# Do not commit customer/pricing/serial-number data or generated reports.
+*.xlsx
+*.xlsm
+*.xls
+~$*.xlsx
+renewal_comparison*.xlsx
+renewal_comparison*.pptx
+
+# Portable distribution zips (built locally, shared via internal drive)
+CCWR-Windows-Portable*.zip
+CCWR-Mac-Portable*.zip
+
+# Compiled Dock launcher (regenerated locally via osacompile, not source)
+*.app/
+
+# Personal scratch notes, not project source
+note.md
+Untitled.txt
+message instruction.txt
+glasia.xlsx.bak-*
+
+# Large brand asset, not read directly by the app (see assets/cisco_template.pptx)
+Cisco PPT template/
+
+# Auto-refresh automation logs (local only, regenerated on every run)
+auto_refresh_master.log
+auto_refresh_master.launchd.log
+auto_refresh_master.launchd.err.log
+_auto_refresh_raw.xlsx
